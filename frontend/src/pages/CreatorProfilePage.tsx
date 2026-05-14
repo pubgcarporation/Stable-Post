@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { getAddress, isAddress } from "viem";
 import { PostFeed } from "../components/posts/PostFeed";
 import { apiErrorMessage, apiJson } from "../lib/api";
@@ -8,19 +8,24 @@ import { resolveMediaUrl } from "../lib/mediaUrl";
 import type { PublicUser } from "../types/api";
 
 export function CreatorProfilePage() {
-  const { address: paramAddress } = useParams<{ address: string }>();
-  const raw = paramAddress?.trim() ?? "";
-  const valid = raw.length > 0 && isAddress(raw);
-  const normalized = valid ? getAddress(raw) : null;
+  const { address: paramAddress, username: paramUsername } = useParams<{
+    address?: string;
+    username?: string;
+  }>();
+  const rawAddress = paramAddress?.trim() ?? "";
+  const rawUsername = paramUsername?.trim() ?? "";
+  const isWalletRoute = rawAddress.length > 0;
+  const validWallet = isWalletRoute && isAddress(rawAddress);
+  const normalizedWallet = validWallet ? getAddress(rawAddress) : null;
 
   const [user, setUser] = useState<PublicUser | null>(null);
   const [registered, setRegistered] = useState<boolean | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(!!normalized);
+  const [loading, setLoading] = useState(!!normalizedWallet || !!rawUsername);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!normalized) {
+    if (!normalizedWallet && !rawUsername) {
       setLoading(false);
       return;
     }
@@ -29,10 +34,17 @@ export function CreatorProfilePage() {
     setLoadErr(null);
     void (async () => {
       try {
-        const data = await apiJson<
-          | { registered: true; user: PublicUser }
-          | { registered: false }
-        >(`/users/by-wallet/${normalized}`);
+        const data = normalizedWallet
+          ? await apiJson<
+              | { registered: true; user: PublicUser }
+              | { registered: false }
+            >(`/users/by-wallet/${normalizedWallet}`)
+          : {
+              registered: true as const,
+              user: await apiJson<PublicUser>(
+                `/users/by-username/${encodeURIComponent(rawUsername)}`
+              ),
+            };
         if (cancelled) return;
         if (data.registered) {
           setUser(data.user);
@@ -50,7 +62,7 @@ export function CreatorProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [normalized]);
+  }, [normalizedWallet, rawUsername]);
 
   const custodial = user?.custodialWalletAddress?.trim() ?? "";
 
@@ -61,7 +73,7 @@ export function CreatorProfilePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!valid || !normalized) {
+  if (isWalletRoute && !normalizedWallet) {
     return (
       <div className="page page--creator-profile">
         <p className="error feed-status">Invalid wallet address.</p>
@@ -72,8 +84,30 @@ export function CreatorProfilePage() {
     );
   }
 
+  if (!isWalletRoute && !rawUsername) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (isWalletRoute && user?.username) {
+    return <Navigate to={`/${encodeURIComponent(user.username)}`} replace />;
+  }
+
+  const profileAddress = user?.walletAddress ?? normalizedWallet;
+  if (!profileAddress && !loading) {
+    return (
+      <div className="page page--creator-profile">
+        <p className="error feed-status">{loadErr ?? "Profile not found."}</p>
+        <Link to="/" className="btn-ghost-sm">
+          Back to feed
+        </Link>
+      </div>
+    );
+  }
+
   const avatarSrc = resolveMediaUrl(user?.avatarUrl);
-  const displayName = user?.username?.trim() || shortenAddress(normalized, 6, 4);
+  const displayName =
+    user?.username?.trim() ||
+    (profileAddress ? shortenAddress(profileAddress, 6, 4) : rawUsername);
 
   return (
     <div className="page page--creator-profile">
@@ -130,11 +164,15 @@ export function CreatorProfilePage() {
 
       <section className="creator-prof-posts">
         <h2 className="creator-prof-section-title">Posts</h2>
-        <PostFeed
-          onlyCreator={normalized}
-          emptyMessage="No posts from this creator yet."
-          linkAuthorProfile={false}
-        />
+        {profileAddress ? (
+          <PostFeed
+            onlyCreator={profileAddress}
+            emptyMessage="No posts from this creator yet."
+            linkAuthorProfile={false}
+          />
+        ) : (
+          <p className="muted feed-status">Loading posts…</p>
+        )}
       </section>
     </div>
   );

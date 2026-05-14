@@ -52,6 +52,9 @@ export function PostAuthor({
 
   const avatar = resolveMediaUrl(user?.avatarUrl);
   const display = user?.username ?? shortenAddress(address);
+  const profilePath = user?.username
+    ? `/${encodeURIComponent(user.username)}`
+    : `/u/${encodeURIComponent(address)}`;
 
   const inner = (
     <>
@@ -67,7 +70,7 @@ export function PostAuthor({
   if (linkToProfile) {
     return (
       <Link
-        to={`/u/${encodeURIComponent(address)}`}
+        to={profilePath}
         className="author author--profile-link"
         title={address}
       >

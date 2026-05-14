@@ -15,6 +15,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/u/:address" element={<CreatorProfilePage />} />
+        <Route path="/:username" element={<CreatorProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppLayout>
