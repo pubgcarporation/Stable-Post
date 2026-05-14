@@ -1,0 +1,20 @@
+{
+  "name": "stable-post-contracts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "hardhat clean",
+    "precompile": "hardhat clean",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:arc-testnet": "hardhat run deploy/StablePost.ts --network arcTestnet"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-mocha-ethers": "^3.0.5",
+    "@openzeppelin/contracts": "^5.2.0",
+    "@types/node": "^22.10.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^3.4.5",
+    "typescript": "^5.7.2"
+  }
+}

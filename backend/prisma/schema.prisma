@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  walletAddress       String   @unique
+  username            String?  @unique
+  circleWalletId      String?
+  circleWalletAddress String?
+  avatarUrl           String?
+  profileMetadata     Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  posts               Post[]
+  likes               Like[]
+}
+
+model Post {
+  onChainPostId  Int      @id @default(autoincrement())
+  id             String   @unique @default(cuid())
+  creatorAddress String
+  content        String
+  imageUrl       String?
+  tipCount       Int      @default(0)
+  tipTotal       Float    @default(0)
+  createdAt      DateTime @default(now())
+
+  creator User   @relation(fields: [creatorAddress], references: [walletAddress])
+  likes   Like[]
+
+  @@index([creatorAddress])
+  @@index([createdAt])
+  @@index([tipCount])
+}
+
+model Like {
+  id            String   @id @default(cuid())
+  postId        String
+  walletAddress String
+  createdAt     DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id])
+  user User @relation(fields: [walletAddress], references: [walletAddress])
+
+  @@unique([postId, walletAddress])
+  @@index([postId])
+  @@index([walletAddress])
+}
+
+model Tip {
+  id               String   @id @default(cuid())
+  recipientAddress String
+  fromAddress      String?
+  postId           String?
+  amount           Float
+  createdAt        DateTime @default(now())
+
+  @@index([recipientAddress])
+  @@index([createdAt])
+}
+
+model AuthNonce {
+  id            String   @id @default(cuid())
+  walletAddress String
+  nonce         String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([walletAddress])
+}

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+dev.db
+dev.db-journal
+circle-recovery/
+uploads/
