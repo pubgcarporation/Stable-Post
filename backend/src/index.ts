@@ -6,7 +6,8 @@ import { createStablePostReader } from "./services/chain";
 import { createApp } from "./app";
 
 const env = loadEnv();
-const uploadsDir = ensureUploadsDir(path.join(__dirname, ".."));
+const uploadsRoot = process.env.UPLOADS_DIR?.trim() || path.join(__dirname, "..");
+const uploadsDir = ensureUploadsDir(uploadsRoot);
 const { stablePost, provider } = createStablePostReader(env);
 const app = createApp(stablePost, {
   prisma,
@@ -20,6 +21,7 @@ const app = createApp(stablePost, {
 
 const server = app.listen(env.port, () => {
   console.log(`API listening on http://localhost:${env.port}`);
+  console.log(`Uploads directory: ${uploadsDir}`);
 });
 
 async function shutdown() {

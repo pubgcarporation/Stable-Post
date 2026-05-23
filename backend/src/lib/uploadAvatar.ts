@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { Request } from "express";
+import type { Request, RequestHandler } from "express";
 import multer from "multer";
 
 export const UPLOADS_DIRNAME = "uploads";
@@ -17,6 +17,19 @@ export function removeUploadFile(uploadsDir: string, publicUrl: string | null | 
   if (!publicUrl?.startsWith(`/${UPLOADS_DIRNAME}/`)) return;
   const file = path.join(uploadsDir, path.basename(publicUrl));
   fs.unlink(file, () => {});
+}
+
+export function createUploadsHandler(uploadsDir: string): RequestHandler {
+  return (req, res) => {
+    const name = path.basename(req.path);
+    if (!name || name === "." || name.includes("..")) {
+      res.sendStatus(400);
+      return;
+    }
+    res.sendFile(path.join(uploadsDir, name), (err) => {
+      if (err) res.sendStatus(404);
+    });
+  };
 }
 
 function createUploader(uploadsDir: string, prefix: string) {

@@ -5,6 +5,7 @@ import type { PrismaClient } from "@prisma/client";
 import type { CircleCredentials } from "./config/env";
 import { registerRoutes } from "./routes";
 import { HttpError } from "./lib/errors";
+import { createUploadsHandler } from "./lib/uploadAvatar";
 
 function corsOrigin(): boolean | string | string[] {
   const raw = process.env.CORS_ORIGIN?.trim();
@@ -31,10 +32,7 @@ export function createApp(
   const app = express();
   app.use(cors({ origin: corsOrigin(), credentials: true }));
   app.use(express.json({ limit: "256kb" }));
-  app.use(
-    "/uploads",
-    express.static(deps.uploadsDir, { fallthrough: false })
-  );
+  app.use("/uploads", createUploadsHandler(deps.uploadsDir));
 
   registerRoutes(app, stablePost, deps);
 
