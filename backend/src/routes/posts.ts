@@ -7,7 +7,10 @@ import { HttpError } from "../lib/errors";
 import { requireAuth } from "../middleware/auth";
 import { requireOnboarded } from "../middleware/onboarding";
 import { verifyAccessToken } from "../lib/jwt";
-import { createPostImageUploader } from "../lib/uploadAvatar";
+import {
+  createPostImageUploader,
+  publicUrlForUpload,
+} from "../lib/uploadAvatar";
 
 const MAX_CONTENT_LENGTH = 50_000;
 
@@ -281,7 +284,13 @@ export function createPostsRouter(
             400
           );
         }
-        res.json({ imageUrl: `/uploads/${req.file.filename}` });
+        const imageUrl = await publicUrlForUpload(
+          req.file,
+          uploadsDir,
+          "post",
+          req.auth!.userId
+        );
+        res.json({ imageUrl });
       } catch (e) {
         next(e);
       }

@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
-import type { Request, RequestHandler } from "express";
+import type { Express, Request, RequestHandler } from "express";
 import multer from "multer";
+import {
+  destroyCloudImage,
+  isCloudinaryEnabled,
+  uploadImageFile,
+} from "./cloudinaryStorage";
 
 export const UPLOADS_DIRNAME = "uploads";
 
@@ -48,6 +53,34 @@ export function removeUploadFile(uploadsDir: string, publicUrl: string | null | 
   fs.unlink(file, () => {});
 }
 
+export async function removeStoredImage(
+  uploadsDir: string,
+  publicUrl: string | null | undefined
+): Promise<void> {
+  if (!publicUrl) return;
+  if (publicUrl.startsWith("http://") || publicUrl.startsWith("https://")) {
+    await destroyCloudImage(publicUrl);
+    return;
+  }
+  removeUploadFile(uploadsDir, publicUrl);
+}
+
+export async function publicUrlForUpload(
+  file: Express.Multer.File,
+  uploadsDir: string,
+  prefix: "avatar" | "post",
+  userId: string
+): Promise<string> {
+  if (isCloudinaryEnabled()) {
+    const folder = prefix === "avatar" ? "avatars" : "posts";
+    return uploadImageFile(file, folder, prefix, userId);
+  }
+  if (!file.filename) {
+    throw new Error("Missing uploaded file");
+  }
+  return `/${UPLOADS_DIRNAME}/${file.filename}`;
+}
+
 export function createUploadsHandler(uploadsDir: string): RequestHandler {
   return (req, res) => {
     const name = path.basename(req.path);
@@ -62,16 +95,18 @@ export function createUploadsHandler(uploadsDir: string): RequestHandler {
 }
 
 function createUploader(uploadsDir: string, prefix: string) {
-  const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      cb(null, uploadsDir);
-    },
-    filename: (req: Request, file, cb) => {
-      const raw = path.extname(file.originalname).toLowerCase();
-      const ext = ALLOWED_EXT.has(raw) ? raw : ".jpg";
-      cb(null, `${prefix}-${req.auth!.userId}-${Date.now()}${ext}`);
-    },
-  });
+  const storage = isCloudinaryEnabled()
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: (_req, _file, cb) => {
+          cb(null, uploadsDir);
+        },
+        filename: (req: Request, file, cb) => {
+          const raw = path.extname(file.originalname).toLowerCase();
+          const ext = ALLOWED_EXT.has(raw) ? raw : ".jpg";
+          cb(null, `${prefix}-${req.auth!.userId}-${Date.now()}${ext}`);
+        },
+      });
 
   return multer({
     storage,

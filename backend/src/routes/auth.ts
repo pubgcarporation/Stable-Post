@@ -17,7 +17,8 @@ import {
 import { provisionCustodialWalletOnArc } from "../services/circleWallet";
 import {
   createAvatarUploader,
-  removeUploadFile,
+  publicUrlForUpload,
+  removeStoredImage,
 } from "../lib/uploadAvatar";
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,32}$/;
@@ -224,16 +225,21 @@ export function createAuthRouter(
         if (!prev) {
           throw new HttpError("User not found", 404);
         }
-        const publicUrl = `/uploads/${req.file.filename}`;
+        const publicUrl = await publicUrlForUpload(
+          req.file,
+          uploadsDir,
+          "avatar",
+          id
+        );
         try {
           const user = await db.user.update({
             where: { id },
             data: { avatarUrl: publicUrl },
           });
-          removeUploadFile(uploadsDir, prev.avatarUrl);
+          await removeStoredImage(uploadsDir, prev.avatarUrl);
           res.json({ user: toPublicUser(user, { circleConfigured }) });
         } catch (e) {
-          fs.unlink(req.file.path, () => {});
+          if (req.file.path) fs.unlink(req.file.path, () => {});
           throw e;
         }
       } catch (e) {

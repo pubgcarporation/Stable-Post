@@ -1,11 +1,13 @@
 import path from "path";
 import { loadEnv } from "./config/env";
 import { prisma } from "./lib/prisma";
+import { initCloudinary, isCloudinaryEnabled } from "./lib/cloudinaryStorage";
 import { resolveUploadsDir } from "./lib/uploadAvatar";
 import { createStablePostReader } from "./services/chain";
 import { createApp } from "./app";
 
 const env = loadEnv();
+initCloudinary();
 const uploadsDir = resolveUploadsDir(path.join(__dirname, ".."));
 const { stablePost, provider } = createStablePostReader(env);
 const app = createApp(stablePost, {
@@ -20,7 +22,11 @@ const app = createApp(stablePost, {
 
 const server = app.listen(env.port, () => {
   console.log(`API listening on http://localhost:${env.port}`);
-  console.log(`Uploads directory: ${uploadsDir}`);
+  console.log(
+    isCloudinaryEnabled()
+      ? "Image storage: Cloudinary (persistent URLs)"
+      : `Image storage: local disk (${uploadsDir})`
+  );
 });
 
 async function shutdown() {
