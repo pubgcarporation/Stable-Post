@@ -7,8 +7,10 @@ export const UPLOADS_DIRNAME = "uploads";
 
 const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
-export function ensureUploadsDir(root = process.cwd()): string {
-  const dir = path.join(root, UPLOADS_DIRNAME);
+/** Local default: `{root}/uploads`. If `UPLOADS_DIR` is set, use that path as-is (no extra `/uploads`). */
+export function resolveUploadsDir(defaultRoot: string): string {
+  const envDir = process.env.UPLOADS_DIR?.trim();
+  const dir = envDir || path.join(defaultRoot, UPLOADS_DIRNAME);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

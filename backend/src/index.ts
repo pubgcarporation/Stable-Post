@@ -1,13 +1,12 @@
 import path from "path";
 import { loadEnv } from "./config/env";
 import { prisma } from "./lib/prisma";
-import { ensureUploadsDir } from "./lib/uploadAvatar";
+import { resolveUploadsDir } from "./lib/uploadAvatar";
 import { createStablePostReader } from "./services/chain";
 import { createApp } from "./app";
 
 const env = loadEnv();
-const uploadsRoot = process.env.UPLOADS_DIR?.trim() || path.join(__dirname, "..");
-const uploadsDir = ensureUploadsDir(uploadsRoot);
+const uploadsDir = resolveUploadsDir(path.join(__dirname, ".."));
 const { stablePost, provider } = createStablePostReader(env);
 const app = createApp(stablePost, {
   prisma,
