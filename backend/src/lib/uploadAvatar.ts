@@ -7,12 +7,39 @@ export const UPLOADS_DIRNAME = "uploads";
 
 const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
+function ensureDir(dir: string): void {
+  if (fs.existsSync(dir)) {
+    if (!fs.statSync(dir).isDirectory()) {
+      throw Object.assign(new Error(`Not a directory: ${dir}`), { code: "ENOTDIR" });
+    }
+    return;
+  }
+  fs.mkdirSync(dir, { recursive: true });
+}
+
 /** Local default: `{root}/uploads`. If `UPLOADS_DIR` is set, use that path as-is (no extra `/uploads`). */
 export function resolveUploadsDir(defaultRoot: string): string {
+  const fallback = path.join(defaultRoot, UPLOADS_DIRNAME);
   const envDir = process.env.UPLOADS_DIR?.trim();
-  const dir = envDir || path.join(defaultRoot, UPLOADS_DIRNAME);
-  fs.mkdirSync(dir, { recursive: true });
-  return dir;
+  if (!envDir) {
+    ensureDir(fallback);
+    return fallback;
+  }
+  try {
+    ensureDir(envDir);
+    return envDir;
+  } catch (err) {
+    const code =
+      err && typeof err === "object" && "code" in err
+        ? String((err as NodeJS.ErrnoException).code)
+        : "UNKNOWN";
+    console.warn(
+      `[uploads] Cannot use UPLOADS_DIR=${envDir} (${code}). Using ${fallback}. ` +
+        "Render Free cannot use persistent disks — upgrade the instance or remove UPLOADS_DIR."
+    );
+    ensureDir(fallback);
+    return fallback;
+  }
 }
 
 export function removeUploadFile(uploadsDir: string, publicUrl: string | null | undefined) {
