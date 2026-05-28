@@ -29,7 +29,6 @@ export async function uploadImageFile(
     throw new Error("Missing image buffer");
   }
   const ext = file.originalname.match(/\.(jpe?g|png|webp|gif)$/i)?.[1]?.toLowerCase() ?? "jpg";
-  const publicId = `stable-post/${folder}/${namePrefix}-${userId}-${Date.now()}`;
   const result = await cloudinary.uploader.upload(
     `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
     {
@@ -39,6 +38,7 @@ export async function uploadImageFile(
       resource_type: "image",
     }
   );
+  console.log(`[cloudinary] uploaded ${folder}/${namePrefix} user=${userId}`);
   return result.secure_url;
 }
 

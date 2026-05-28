@@ -237,6 +237,7 @@ export function createAuthRouter(
             data: { avatarUrl: publicUrl },
           });
           await removeStoredImage(uploadsDir, prev.avatarUrl);
+          console.log(`[avatar] saved user=${id} url=${publicUrl}`);
           res.json({ user: toPublicUser(user, { circleConfigured }) });
         } catch (e) {
           if (req.file.path) fs.unlink(req.file.path, () => {});

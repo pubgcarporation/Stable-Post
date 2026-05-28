@@ -290,6 +290,7 @@ export function createPostsRouter(
           "post",
           req.auth!.userId
         );
+        console.log(`[post-image] saved user=${req.auth!.userId} url=${imageUrl}`);
         res.json({ imageUrl });
       } catch (e) {
         next(e);
