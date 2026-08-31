@@ -13,18 +13,25 @@ export const UPLOADS_DIRNAME = "uploads";
 const ALLOWED_EXT = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
 function ensureDir(dir: string): void {
-  if (fs.existsSync(dir)) {
-    if (!fs.statSync(dir).isDirectory()) {
-      throw Object.assign(new Error(`Not a directory: ${dir}`), { code: "ENOTDIR" });
+  try {
+    if (fs.existsSync(dir)) {
+      if (!fs.statSync(dir).isDirectory()) {
+        throw Object.assign(new Error(`Not a directory: ${dir}`), { code: "ENOTDIR" });
+      }
+      return;
     }
+    fs.mkdirSync(dir, { recursive: true });
+  } catch {
     return;
   }
-  fs.mkdirSync(dir, { recursive: true });
 }
 
-/** Local default: `{root}/uploads`. If `UPLOADS_DIR` is set, use that path as-is (no extra `/uploads`). */
+/** Local default: `{root}/uploads`. Cloudflare has no persistent disk — use Cloudinary there. */
 export function resolveUploadsDir(defaultRoot: string): string {
   const fallback = path.join(defaultRoot, UPLOADS_DIRNAME);
+  if (isCloudinaryEnabled()) {
+    return process.env.UPLOADS_DIR?.trim() || fallback;
+  }
   const envDir = process.env.UPLOADS_DIR?.trim();
   if (!envDir) {
     ensureDir(fallback);
@@ -39,8 +46,7 @@ export function resolveUploadsDir(defaultRoot: string): string {
         ? String((err as NodeJS.ErrnoException).code)
         : "UNKNOWN";
     console.warn(
-      `[uploads] Cannot use UPLOADS_DIR=${envDir} (${code}). Using ${fallback}. ` +
-        "Render Free cannot use persistent disks — upgrade the instance or remove UPLOADS_DIR."
+      `[uploads] Cannot use UPLOADS_DIR=${envDir} (${code}). Using ${fallback}.`
     );
     ensureDir(fallback);
     return fallback;

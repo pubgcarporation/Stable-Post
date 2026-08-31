@@ -8,10 +8,12 @@
     "db:push": "prisma db push",
     "postinstall": "prisma generate",
     "circle:create-wallet-set": "tsx scripts/circle-create-wallet-set.ts",
-    "circle:bootstrap": "tsx scripts/circle-bootstrap.ts"
+    "circle:bootstrap": "tsx scripts/circle-bootstrap.ts",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
     "@circle-fin/developer-controlled-wallets": "^10.3.1",
+    "@prisma/adapter-d1": "^6.19.3",
     "@prisma/client": "^6.3.1",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
@@ -29,6 +31,7 @@
     "@types/node": "^22.10.0",
     "prisma": "^6.3.1",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "wrangler": "^4.127.1"
   }
 }

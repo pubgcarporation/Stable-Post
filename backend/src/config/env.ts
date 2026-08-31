@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { ethers } from "ethers";
 
 export type CircleCredentials = {

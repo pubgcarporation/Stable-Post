@@ -1,0 +1,29 @@
+{
+  "name": "stable-post-api",
+  "main": "worker.ts",
+  "compatibility_date": "2026-08-28",
+  "compatibility_flags": ["nodejs_compat"],
+  "alias": {
+    "iconv-lite": "./stubs/iconv-lite.cjs",
+    "supports-color": "./stubs/empty.cjs",
+    "supports-hyperlinks": "./stubs/empty.cjs",
+    "terminal-link": "./stubs/empty.cjs"
+  },
+  "define": {
+    "import.meta.url": "'file:///worker.js'"
+  },
+  "observability": { "enabled": true },
+  "vars": {
+    "ARC_RPC_URL": "https://rpc.testnet.arc.network",
+    "ARC_CHAIN_ID": "5042002",
+    "USDC_ADDRESS": "0x3600000000000000000000000000000000000000",
+    "STABLEPOST_ADDRESS": "0x0E15F0c661cD595c9c4f4256042953204e45e74C"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stable-post",
+      "database_id": "62bde330-1d25-4946-b9df-fc95f83b55b7"
+    }
+  ]
+}

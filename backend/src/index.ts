@@ -1,29 +1,13 @@
-import path from "path";
-import { loadEnv } from "./config/env";
+import "dotenv/config";
 import { prisma } from "./lib/prisma";
-import { initCloudinary, isCloudinaryEnabled } from "./lib/cloudinaryStorage";
-import { resolveUploadsDir } from "./lib/uploadAvatar";
-import { createStablePostReader } from "./services/chain";
-import { createApp } from "./app";
+import { bootApp } from "./boot";
 
-const env = loadEnv();
-initCloudinary();
-const uploadsDir = resolveUploadsDir(path.join(__dirname, ".."));
-const { stablePost, provider } = createStablePostReader(env);
-const app = createApp(stablePost, {
-  prisma,
-  jwtSecret: env.jwtSecret,
-  circle: env.circle,
-  uploadsDir,
-  stablePostAddress: env.stablePostAddress,
-  usdcAddress: env.usdcAddress,
-  provider,
-});
+const { app, env, uploadsDir, cloudinary } = bootApp(prisma);
 
 const server = app.listen(env.port, () => {
   console.log(`API listening on http://localhost:${env.port}`);
   console.log(
-    isCloudinaryEnabled()
+    cloudinary
       ? "Image storage: Cloudinary (persistent URLs)"
       : `Image storage: local disk (${uploadsDir})`
   );
