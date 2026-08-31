@@ -15,20 +15,13 @@ export function apiErrorMessage(e: unknown, fallback: string): string {
   return fallback;
 }
 
-const DEFAULT_DEV_API_ORIGIN = "http://127.0.0.1:3000";
-
-function apiBase(): string {
-  const raw = import.meta.env.VITE_API_URL?.trim();
-  if (raw) return raw.replace(/\/$/, "");
-  if (import.meta.env.MODE === "development") {
-    return DEFAULT_DEV_API_ORIGIN;
-  }
-  return "";
+export function apiOrigin(): string {
+  return import.meta.env.VITE_API_URL?.trim().replace(/\/$/, "") ?? "";
 }
 
 function apiUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
-  const base = apiBase();
+  const base = apiOrigin();
   if (base) return `${base}${p}`;
   return `/api${p}`;
 }
@@ -54,7 +47,7 @@ export async function apiFetch(
 }
 
 const BACKEND_UNREACHABLE =
-  "Cannot reach the API. Start the backend (npm run dev in backend/). Default URL is http://127.0.0.1:3000 — if you use another port, set VITE_API_URL in frontend/.env.";
+  "Cannot reach the API. Set VITE_API_URL (Vercel env in production, or frontend/.env locally).";
 
 function messageFromJsonBody(data: unknown): string | undefined {
   if (data && typeof data === "object" && data !== null && "error" in data) {

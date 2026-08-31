@@ -25,7 +25,7 @@ type DepositTab = "address" | "direct";
 export function WalletPage() {
   const config = useConfig();
   const { address } = useAccount();
-  const { sessionReady, token, user } = useAuth();
+  const { sessionReady, token, user, loading, error, provisionCustodialWallet } = useAuth();
   const contract = useStablePostContract();
   const { usdcAddress, decimals, symbol } = useUsdcMeta();
   const { isArc, ensureArc, isSwitching, chain } = useArcChain();
@@ -462,7 +462,20 @@ export function WalletPage() {
             </>
           ) : (
             <section className="wlt-card wlt-card--empty">
-              <p className="wlt-hint">No custodial wallet yet. Complete onboarding on the Dashboard to activate tipping and deposits.</p>
+              <p className="wlt-hint">
+                Your profile is set up. Create a custodial wallet to tip, deposit, and withdraw USDC.
+              </p>
+              <button
+                type="button"
+                className="wlt-action-btn"
+                disabled={loading}
+                onClick={() => void provisionCustodialWallet()}
+              >
+                {loading ? "Creating…" : "Create custodial wallet"}
+              </button>
+              {error && (
+                <p className="wlt-status err" role="alert">{error}</p>
+              )}
             </section>
           )}
         </div>
